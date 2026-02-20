@@ -568,6 +568,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `
         }
+        <button class="share-button" data-activity="${name}" aria-label="Share ${name}">
+          📤 Share
+        </button>
       </div>
     `;
 
@@ -587,7 +590,40 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Add click handler for share button
+    const shareButton = activityCard.querySelector(".share-button");
+    shareButton.addEventListener("click", () => {
+      shareActivity(name, details);
+    });
+
     activitiesList.appendChild(activityCard);
+  }
+
+  // Share an activity using the Web Share API or clipboard fallback
+  async function shareActivity(name, details) {
+    const formattedSchedule = formatSchedule(details);
+    const spotsLeft = details.max_participants - details.participants.length;
+    const spotsText = spotsLeft > 0 ? `Spots available: ${spotsLeft}` : "Activity is full";
+    const shareText = `Check out "${name}" at Mergington High School!\n${details.description}\nSchedule: ${formattedSchedule}\n${spotsText}`;
+    const shareTitle = `${name} - Mergington High School Activities`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Error sharing:", error);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showMessage("Activity details copied to clipboard!", "success");
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        showMessage("Could not copy to clipboard.", "error");
+      }
+    }
   }
 
   // Event listeners for search and filter
